@@ -58,6 +58,11 @@ async def ciccione(ctx: commands.Context):
     await ctx.send(content=f"{ctx.author.display_name} è ciccione", tts=True)
 
 
+async def tendinfame(ctx: commands.Context):
+    """Tend Infame"""
+    await ctx.send(content="Tend Infame", tts=True)
+
+
 async def clean(ctx: commands.Context):
     """Togli un po' di schifo"""
     try:
@@ -115,11 +120,6 @@ async def cht(ctx: commands.Context, track: str = None):
 async def war(ctx: commands.Context, track: str = None):
     """Warzonata"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/warzonata{}.mp3", track=track, max_track=1)
-
-
-async def tendinfame(ctx: commands.Context):
-    """Tend Infame"""
-    await ctx.send(content="Tend Infame", tts=True)
 
 
 rules_jester_text = """```Per giocare la modalità jester si applicano le seguenti regole:
