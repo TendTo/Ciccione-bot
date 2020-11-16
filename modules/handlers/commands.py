@@ -22,6 +22,7 @@ def add_commands(bot: commands.Bot):
     bot.add_command(commands.Command(ame))
     bot.add_command(commands.Command(cht))
     bot.add_command(commands.Command(tendinfame))
+    bot.add_command(commands.Command(war))
 
 
 async def roll(ctx: commands.Context, dice: str = None):
@@ -109,6 +110,11 @@ async def ame(ctx: commands.Context, track: str = None):
 async def cht(ctx: commands.Context, track: str = None):
     """Hollywood"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/cht{}.mp3", track=track, max_track=3)
+
+
+async def war(ctx: commands.Context, track: str = None):
+    """Warzonata"""
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/warzonata{}.mp3", track=track, max_track=1)
 
 
 async def tendinfame(ctx: commands.Context):
