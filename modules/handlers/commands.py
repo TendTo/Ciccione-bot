@@ -15,6 +15,7 @@ def add_commands(bot: commands.Bot):
     bot.add_command(commands.Command(flip))
     bot.add_command(commands.Command(ciccione))
     bot.add_command(commands.Command(clean))
+    bot.add_command(commands.Command(clear))
     bot.add_command(commands.Command(jester))
     bot.add_command(commands.Command(rules_jester))
     bot.add_command(commands.Command(code))
@@ -64,6 +65,15 @@ async def tendinfame(ctx: commands.Context):
 
 
 async def clean(ctx: commands.Context):
+    """Togli un po' di schifo"""
+    try:
+        await ctx.channel.purge(limit=100,
+                                check=lambda msg: msg.content.startswith("?") or msg.author.id == 767524102537216001)
+    except CommandInvokeError:
+        ctx.send(content="Questo comando non è supportato in questo canale")
+
+
+async def clear(ctx: commands.Context):
     """Togli un po' di schifo"""
     try:
         await ctx.channel.purge(limit=100,
