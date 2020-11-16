@@ -6,7 +6,6 @@ from modules.handlers.events import add_events
 
 def main():
     """Main"""
-    print("Aggiunta modifica")
     intents = discord.Intents.default()
     intents.members = True
     with open("config/token.conf") as token_f:
