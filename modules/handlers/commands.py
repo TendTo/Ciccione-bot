@@ -1,5 +1,6 @@
 """Contains all the commands the bot will react to"""
 import random
+import os
 from typing import List
 from discord import Member
 from discord.ext import commands
@@ -24,6 +25,7 @@ def add_commands(bot: commands.Bot):
     bot.add_command(commands.Command(war))
     bot.add_command(commands.Command(clean))
     bot.add_command(commands.Command(clear))
+    bot.add_command(commands.Command(kgb))
 
 
 async def roll(ctx: commands.Context, dice: str = None):
@@ -52,6 +54,24 @@ async def flip(ctx: commands.Context):
         text = "croce"
 
     await ctx.send(content=f"È uscita **{text}**")
+
+
+async def kgb(ctx: commands.Context):
+    """Quanto è ciccione il ciccione bot (rivela da quanti caratteri non spazio è composto il codice)"""
+    total_kg = 0
+    path = os.path.abspath('./modules')
+    for root, dirname, files in os.walk(path):
+        if dirname not in ('.venv', '__pycache__'):
+            for file_name in files:
+                if file_name.endswith(".py"):
+                    file_path = os.path.join(root, file_name)
+                    with open(file=file_path, mode='r') as f:
+                        data = f.read().replace(" ", "")
+                        total_kg += len(data)
+    with open(file=os.path.join(path, '..', 'main.py'), mode='r') as f:
+        data = f.read().replace(" ", "")
+        total_kg += len(data)
+    await ctx.send(content=f"Il ciccione pesa **{total_kg}kg**")
 
 
 async def ciccione(ctx: commands.Context):
@@ -101,13 +121,12 @@ async def code(ctx: commands.Context, n_code: str = None):
         for letter in n_code:
             letters.append(letter)
         text = ", ".join(letters)
-        globals()['text_code'] = []
-        globals()['text_code'].append(n_code)
-        globals()['text_code'].append(text)
+        text_code.append(n_code)
+        text_code.append(text)
 
-    if globals()['text_code']:
-        _code = globals()['text_code'][0]
-        _comma_code = globals()['text_code'][1]
+    if text_code:
+        _code = text_code[0]
+        _comma_code = text_code[1]
         await ctx.send(content=f"Il codice è {_comma_code}", tts=True)
         await ctx.send(content=f"{_code}")
 
