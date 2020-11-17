@@ -10,7 +10,7 @@ def main():
     intents.members = True
     with open("config/token.conf") as token_f:
         token = token_f.readline()
-    bot = commands.Bot(command_prefix='?', help_command=None)
+    bot = commands.Bot(command_prefix='?')
 
     add_events(bot)
     add_commands(bot)

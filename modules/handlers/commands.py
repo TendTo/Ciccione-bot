@@ -13,21 +13,21 @@ def add_commands(bot: commands.Bot):
     """Adds the commands to the bot"""
     bot.add_command(commands.Command(roll))
     bot.add_command(commands.Command(flip))
-    bot.add_command(commands.Command(ciccione))
-    bot.add_command(commands.Command(clean))
-    bot.add_command(commands.Command(clear))
     bot.add_command(commands.Command(jester))
     bot.add_command(commands.Command(rules_jester))
+    bot.add_command(commands.Command(ciccione))
+    bot.add_command(commands.Command(tendinfame))
     bot.add_command(commands.Command(code))
     bot.add_command(commands.Command(seee))
     bot.add_command(commands.Command(ame))
     bot.add_command(commands.Command(cht))
-    bot.add_command(commands.Command(tendinfame))
     bot.add_command(commands.Command(war))
+    bot.add_command(commands.Command(clean))
+    bot.add_command(commands.Command(clear))
 
 
 async def roll(ctx: commands.Context, dice: str = None):
-    """Lancia un dado"""
+    """Lancia un dado | [use]: ?roll <numeroDadi>d<dado>"""
     fail_text = 'Il formato del comando è **?roll <numeroDadi>d<dado>**\nes. **?roll 3d10**  => *lancia 3 dadi a 10 facce*'
     if dice is None:
         await ctx.send(fail_text)
@@ -55,7 +55,7 @@ async def flip(ctx: commands.Context):
 
 
 async def ciccione(ctx: commands.Context):
-    """È ciccione"""
+    """Sei ciccione, very ciccione"""
     await ctx.send(content=f"{ctx.author.display_name} è ciccione", tts=True)
 
 
@@ -65,7 +65,7 @@ async def tendinfame(ctx: commands.Context):
 
 
 async def clean(ctx: commands.Context):
-    """Togli un po' di schifo"""
+    """Toglie il vostro schifo"""
     try:
         await ctx.channel.purge(limit=100,
                                 check=lambda msg: msg.content.startswith("?") or msg.author.id == 767524102537216001)
@@ -74,7 +74,7 @@ async def clean(ctx: commands.Context):
 
 
 async def clear(ctx: commands.Context):
-    """Togli un po' di schifo"""
+    """Toglie il vostro schifo"""
     try:
         await ctx.channel.purge(limit=100,
                                 check=lambda msg: msg.content.startswith("?") or msg.author.id == 767524102537216001)
@@ -90,12 +90,12 @@ async def jester(ctx: commands.Context):
 
 
 async def rules_jester(ctx: commands.Context):
-    """Avvia la modalità jester"""
+    """Mostra le regole della modalità jester"""
     await ctx.send(rules_jester_text)
 
 
 async def code(ctx: commands.Context, n_code: str = None):
-    """Avvia il codice"""
+    """Salva e detta il codice della partita | [use]: ?code [codice]"""
     if n_code is not None:
         letters = []
         for letter in n_code:
@@ -113,22 +113,22 @@ async def code(ctx: commands.Context, n_code: str = None):
 
 
 async def seee(ctx: commands.Context, track: str = None):
-    """Seeeeeeee"""
+    """Seeeeeeee | [use]: ?seee [n_traccia]"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/See{}.mp3", track=track, max_track=4)
 
 
 async def ame(ctx: commands.Context, track: str = None):
-    """A me non m'interessa"""
+    """A me non m'interessa | [use]: ?ame [n_traccia]"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/NonInteressa{}.mp3", track=track, max_track=2)
 
 
 async def cht(ctx: commands.Context, track: str = None):
-    """Hollywood"""
+    """Hollywood | [use]: ?cht [n_traccia]"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/cht{}.mp3", track=track, max_track=3)
 
 
 async def war(ctx: commands.Context, track: str = None):
-    """Warzonata"""
+    """Warzonata | [use]: ?war [n_traccia]"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/warzonata{}.mp3", track=track, max_track=1)
 
 
