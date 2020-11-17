@@ -65,10 +65,10 @@ async def kgb(ctx: commands.Context):
             for file_name in files:
                 if file_name.endswith(".py"):
                     file_path = os.path.join(root, file_name)
-                    with open(file=file_path, mode='r') as f:
+                    with open(file=file_path, mode='r', encoding="utf-8") as f:
                         data = f.read().replace(" ", "")
                         total_kg += len(data)
-    with open(file=os.path.join(path, '..', 'main.py'), mode='r') as f:
+    with open(file=os.path.join(path, '..', 'main.py'), mode='r', encoding="utf-8") as f:
         data = f.read().replace(" ", "")
         total_kg += len(data)
     await ctx.send(content=f"Il ciccione pesa **{total_kg}kg**")
