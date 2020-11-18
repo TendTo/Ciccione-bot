@@ -23,6 +23,9 @@ def add_commands(bot: commands.Bot):
     bot.add_command(commands.Command(ame))
     bot.add_command(commands.Command(cht))
     bot.add_command(commands.Command(war))
+    bot.add_command(commands.Command(demo))
+    bot.add_command(commands.Command(ess))
+    bot.add_command(commands.Command(cassa))
     bot.add_command(commands.Command(clean))
     bot.add_command(commands.Command(clear))
     bot.add_command(commands.Command(kgb))
@@ -149,6 +152,21 @@ async def cht(ctx: commands.Context, track: str = None):
 async def war(ctx: commands.Context, track: str = None):
     """Warzonata | [use]: ?war [n_traccia]"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/warzonata{}.mp3", track=track, max_track=1)
+
+
+async def demo(ctx: commands.Context, track: str = None):
+    """Inni Democratici | [use]: ?demo [n_traccia]"""
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/Demo{}.mp3", track=track, max_track=5)
+
+
+async def cassa(ctx: commands.Context, track: str = None):
+    """Salvini e la cassa integrazione | [use]: ?cassa [n_traccia]"""
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/Cassa{}.mp3", track=track, max_track=2)
+
+
+async def ess(ctx: commands.Context, track: str = None):
+    """Modalità Estinzione | [use]: ?ess [n_traccia]"""
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/Voglio morire voglio solo estinguermi{}.mp3", track=track, max_track=1)
 
 
 rules_jester_text = """```Per giocare la modalità jester si applicano le seguenti regole:
