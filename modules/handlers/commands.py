@@ -137,7 +137,7 @@ async def code(ctx: commands.Context, n_code: str = None):
 
 async def seee(ctx: commands.Context, track: str = None):
     """Seeeeeeee | [use]: ?seee [n_traccia]"""
-    await play_sound_effect(ctx=ctx, sound_path="data/sounds/See{}.mp3", track=track, max_track=4)
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/See{}.mp3", track=track, max_track=10)
 
 
 async def ame(ctx: commands.Context, track: str = None):
@@ -167,7 +167,7 @@ async def cassa(ctx: commands.Context, track: str = None):
 
 async def ess(ctx: commands.Context, track: str = None):
     """Modalità Estinzione | [use]: ?ess [n_traccia]"""
-    await play_sound_effect(ctx=ctx, sound_path="data/sounds/Voglio morire voglio solo estinguermi{}.mp3", track=track, max_track=1)
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/Estinguermi{}.mp3", track=track, max_track=1)
 
 
 rules_jester_text = """```Per giocare la modalità jester si applicano le seguenti regole:
