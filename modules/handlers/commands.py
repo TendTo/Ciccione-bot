@@ -124,6 +124,7 @@ async def code(ctx: commands.Context, n_code: str = None):
         for letter in n_code:
             letters.append(letter)
         text = ", ".join(letters)
+        text_code.clear()
         text_code.append(n_code)
         text_code.append(text)
 
