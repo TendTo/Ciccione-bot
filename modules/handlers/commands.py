@@ -25,6 +25,7 @@ def add_commands(bot: commands.Bot):
     bot.add_command(commands.Command(war))
     bot.add_command(commands.Command(demo))
     bot.add_command(commands.Command(ess))
+    bot.add_command(commands.Command(spranga))
     bot.add_command(commands.Command(cassa))
     bot.add_command(commands.Command(clean))
     bot.add_command(commands.Command(clear))
@@ -168,6 +169,11 @@ async def cassa(ctx: commands.Context, track: str = None):
 async def ess(ctx: commands.Context, track: str = None):
     """Modalità Estinzione | [use]: ?ess [n_traccia]"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/Estinguermi{}.mp3", track=track, max_track=1)
+
+
+async def spranga(ctx: commands.Context, track: str = None):
+    """Ecco come risolvere qualsiasi problema | [use]: ?spranga [n_traccia]"""
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/spranga{}.mp3", track=track, max_track=3)
 
 
 rules_jester_text = """```Per giocare la modalità jester si applicano le seguenti regole:
