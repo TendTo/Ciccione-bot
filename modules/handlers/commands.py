@@ -30,6 +30,7 @@ def add_commands(bot: commands.Bot):
     bot.add_command(commands.Command(clean))
     bot.add_command(commands.Command(clear))
     bot.add_command(commands.Command(kgb))
+    bot.add_command(commands.Command(mistakes))
 
 
 async def roll(ctx: commands.Context, dice: str = None):
@@ -174,6 +175,11 @@ async def ess(ctx: commands.Context, track: str = None):
 async def spranga(ctx: commands.Context, track: str = None):
     """Ecco come risolvere qualsiasi problema | [use]: ?spranga [n_traccia]"""
     await play_sound_effect(ctx=ctx, sound_path="data/sounds/spranga{}.mp3", track=track, max_track=3)
+
+
+async def mistakes(ctx: commands.Context, track: str = None):
+    """Ecco come risolvere qualsiasi problema | [use]: ?spranga [n_traccia]"""
+    await play_sound_effect(ctx=ctx, sound_path="data/sounds/mistakes{}.mp3", track=track, max_track=1)
 
 
 rules_jester_text = """```Per giocare la modalità jester si applicano le seguenti regole:
