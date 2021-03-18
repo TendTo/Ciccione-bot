@@ -1,4 +1,5 @@
 """ This example requires the 'members' privileged intents """
+import os
 import discord
 from discord.ext import commands
 from modules.handlers.commands import add_commands
@@ -8,8 +9,10 @@ def main():
     """Main"""
     intents = discord.Intents.default()
     intents.members = True
-    with open("config/token.conf") as token_f:
-        token = token_f.readline()
+    token = os.getenv("TOKEN")
+    if not token:
+        with open("config/token.conf") as token_f:
+            token = token_f.readline()
     bot = commands.Bot(command_prefix='?')
 
     add_events(bot)

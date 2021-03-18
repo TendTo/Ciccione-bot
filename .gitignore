@@ -57,3 +57,8 @@ docs/_build/
 *.conf
 *.exe
 *.bat
+
+#replit
+.replit
+pyproject.toml
+poetry.lock
