@@ -1,0 +1,1 @@
+deno run --allow-env --allow-net --allow-read mod.ts
