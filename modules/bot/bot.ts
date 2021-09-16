@@ -1,7 +1,7 @@
 import { CommandClient, CommandClientOptions, event } from "../../deps.ts";
 import commands from "./slashCommandDefinition.ts";
 import CiccioneSlashModule from "./slashCommand.ts";
-import { CleanCommand, SeeeCommand } from "./commands.ts";
+import { CleanCommand, JoinCommand, PlayCommand, LeaveCommand } from "./commands.ts";
 
 /**
  * Ciccione bot
@@ -11,7 +11,9 @@ export default class CiccioneBot extends CommandClient {
     super(options);
     this.interactions.commands.slash.loadModule(new CiccioneSlashModule());
     this.commands.add(CleanCommand);
-    this.commands.add(SeeeCommand);
+    this.commands.add(JoinCommand);
+    this.commands.add(PlayCommand);
+    this.commands.add(LeaveCommand);
   }
 
   /**
