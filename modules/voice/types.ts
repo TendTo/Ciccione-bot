@@ -28,7 +28,8 @@ export const CHANNELS = 2; // 1 for the client, 1 for the server
 export const SAMPLE_RATE = 48000; // 48KHz
 export const MAX_PACKET_SIZE = 3856; // 28 bytes header + 1276 samples * 3 channels
 export const FRAME_DURATION = 20; // 20ms
-export const FRAME_SIZE = 960; // SAMPLE_RATE * FRAME_DURATION / 1000 = 20ms
+export const FRAME_SIZE = 960; // SAMPLE_RATE * FRAME_DURATION / 1000
 export const MAX_SEQ = 65536; // 2^16
 export const MAX_TIMESTAMP = 4294967296; // 2^32
 export const ENCRYPTION_MODE = "xsalsa20_poly1305"; // default encryption mode
+export const DEFAULT_CHUNK_SIZE = 2 * FRAME_SIZE * CHANNELS; // 2 * FRAME_SIZE * CHANNELS

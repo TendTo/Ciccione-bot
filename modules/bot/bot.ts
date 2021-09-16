@@ -1,7 +1,7 @@
 import { CommandClient, CommandClientOptions, event } from "../../deps.ts";
 import commands from "./slashCommandDefinition.ts";
 import CiccioneSlashModule from "./slashCommand.ts";
-import { CleanCommand, JoinCommand, PlayCommand, LeaveCommand } from "./commands.ts";
+import { CleanCommand, JoinCommand, PlayCommand, LeaveCommand, PlayTestCommand } from "./commands.ts";
 
 /**
  * Ciccione bot
@@ -14,6 +14,7 @@ export default class CiccioneBot extends CommandClient {
     this.commands.add(JoinCommand);
     this.commands.add(PlayCommand);
     this.commands.add(LeaveCommand);
+    this.commands.add(PlayTestCommand);
   }
 
   /**
@@ -25,7 +26,7 @@ export default class CiccioneBot extends CommandClient {
     console.log("CiccioneBot is ready!");
     commands.forEach(async (command) => {
       try {
-        await this.interactions.commands.create(command);
+        // await this.interactions.commands.create(command);
         console.log(`Created CMD ${command.name}!`);
       } catch (e) {
         console.error(e);

@@ -56,7 +56,6 @@ export class VoiceUDP {
     const receive = async () => {
       try {
         const [data] = await this.socket!.receive();
-        console.log(`[UPD] ${data}`);
         if (data[0] === 0x80 && data[1] === 0x78 && data.length >= 12) {
           const view = new DataView(data.buffer);
           const ssrc = view.getUint32(8, false);

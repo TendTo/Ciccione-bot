@@ -1,6 +1,8 @@
 import { Command, CommandContext } from "../../deps.ts";
 import { VoiceConnection } from "../voice/connection.ts";
 import { PCMStream } from "../voice/ffmpeg.ts";
+import ytsr from "https://deno.land/x/youtube_sr@v4.0.1-deno/mod.ts";
+import { getInfo } from "https://deno.land/x/ytdl_core@0.0.1/mod.ts";
 
 export class CleanCommand extends Command {
   name = "clean";
@@ -47,6 +49,32 @@ export class JoinCommand extends Command {
 }
 
 export class PlayCommand extends Command {
+  name = "playold";
+  async execute(ctx: CommandContext) {
+    if (!ctx.guild) return;
+    if (!VoiceConnection.isJoined(ctx.guild.id)) {
+      return ctx.message.reply(
+        "I have not even joined a Voice Channel here.",
+      );
+    }
+
+    const conn = VoiceConnection.get(ctx.guild.id)!;
+    if (!conn.ready) return ctx.message.reply("Connection not ready.");
+
+    const search = await ytsr.searchOne(ctx.argString);
+    if (!search || !search.id) return ctx.message.reply("Nothing found.");
+
+    const info = await getInfo(search.id);
+    const url = info.formats.find((e) => e.hasAudio && !e.hasVideo)!.url;
+
+    const stream = new PCMStream(url);
+    stream.pipeTo(conn.player.writable);
+
+    ctx.message.reply("Playing now - !");
+  }
+}
+
+export class PlayTestCommand extends Command {
   name = "play";
   async execute(ctx: CommandContext) {
     if (!ctx.guild) return;
@@ -59,15 +87,19 @@ export class PlayCommand extends Command {
     const conn = VoiceConnection.get(ctx.guild.id)!;
     if (!conn.ready) return ctx.message.reply("Connection not ready.");
 
-    // const search = await ytsr.searchOne(ctx.argString);
-    // if (!search || !search.id) return ctx.message.reply("Nothing found.");
+    let path = "./data/sounds/See1.mp3";
+    if (!ctx.argString.length) {
+      path = "./data/sounds/See1.mp3";
+    } else {
+      const search = await ytsr.searchOne(ctx.argString);
+      if (!search || !search.id) return ctx.message.reply("Nothing found.");
 
-    // const info = await getInfo(search.id);
-    // const url = info.formats.find((e) => e.hasAudio && !e.hasVideo)!.url;
+      const info = await getInfo(search.id);
+      path = info.formats.find((e) => e.hasAudio && !e.hasVideo)!.url;
+    }
+
     ctx.message.reply("Playing now!");
-
-    const stream = new PCMStream("./data/sounds/See1.mp3");
-    await stream.pipeTo(conn.player.writable);
+    conn.player.play(path);
   }
 }
 
