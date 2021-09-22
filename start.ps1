@@ -1,4 +1,5 @@
 #!/usr/bin/env pwsh
+$ENV:NO_COLOR="true";
 $StartingPoint = "mod.ts"
 if ($args.Length -eq 1) {
   $StartingPoint = $args.Get(0)

@@ -102,7 +102,9 @@ export class VoiceUDP {
           }
         } // ignore other packets
         await receive();
-      } catch (e) {}
+      } catch (e) {
+        console.error(e);
+      }
     };
     await receive();
   }
@@ -198,10 +200,7 @@ export class VoiceUDP {
     }
 
     const buffer = this.#frame.subarray(0, end);
-    return this.socket!.send(
-      buffer,
-      this.conn.ws?.addr!,
-    );
+    return this.socket!.send(buffer, this.conn.ws?.addr!);
   }
 
   close() {

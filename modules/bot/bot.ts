@@ -1,7 +1,7 @@
 import { CommandClient, CommandClientOptions, event } from "../../deps.ts";
-import commands from "./slashCommandDefinition.ts";
-import CiccioneSlashModule from "./slashCommand.ts";
-import { CleanCommand, JoinCommand, PlayCommand, LeaveCommand, PlayTestCommand } from "./commands.ts";
+import commands from "../slashCommands/slashCommandDefinition.ts";
+import GeneralSlashModule from "../slashCommands/generalCommands.ts";
+import AudioSlashModule from "../slashCommands/audioCommands.ts";
 
 /**
  * Ciccione bot
@@ -9,12 +9,44 @@ import { CleanCommand, JoinCommand, PlayCommand, LeaveCommand, PlayTestCommand }
 export default class CiccioneBot extends CommandClient {
   constructor(options: CommandClientOptions) {
     super(options);
-    this.interactions.commands.slash.loadModule(new CiccioneSlashModule());
-    this.commands.add(CleanCommand);
-    this.commands.add(JoinCommand);
-    this.commands.add(PlayCommand);
-    this.commands.add(LeaveCommand);
-    this.commands.add(PlayTestCommand);
+    this.interactions.commands.slash.loadModule(new GeneralSlashModule());
+    this.interactions.commands.slash.loadModule(new AudioSlashModule());
+  }
+
+  /**
+   * Creates the commands globally or only for the provided guild
+   * @param guildID server where to create the commands in
+   */
+  createCommands(guildID?: string) {
+    commands.forEach(async (command) => {
+      try {
+        await this.interactions.commands.create(command, guildID);
+        console.log(`Created CMD ${command.name}!`);
+      } catch (e) {
+        console.error(`Error creating CMD ${command.name}!\n${e}`);
+      }
+    });
+  }
+
+  /**
+   * Deletes all the commands or only the ones in the provided guild
+   * @param guildID server to delete commands from
+   * @returns list of commands successfully deleted
+   */
+  async deleteCommands(guildID?: string) {
+    const commands = guildID
+      ? await this.interactions.commands.guild(guildID)
+      : await this.interactions.commands.all();
+    return Promise.all(
+      commands.map(async (command) => {
+        try {
+          await this.interactions.commands.delete(command.id, guildID);
+          console.log(`Deleted CMD ${command.name}!`);
+        } catch (e) {
+          console.error(`Error deleted CMD ${command.name}!\n${e}`);
+        }
+      }),
+    );
   }
 
   /**
@@ -24,14 +56,7 @@ export default class CiccioneBot extends CommandClient {
   @event()
   ready() {
     console.log("CiccioneBot is ready!");
-    commands.forEach(async (command) => {
-      try {
-        // await this.interactions.commands.create(command);
-        console.log(`Created CMD ${command.name}!`);
-      } catch (e) {
-        console.error(e);
-        console.error(`Error creating CMD ${command.name}!`);
-      }
-    });
+    // this.deleteCommands("768026368428212234");
+    this.createCommands("446793262569619456");
   }
 }

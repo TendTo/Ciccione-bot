@@ -11,7 +11,7 @@ import {
 } from "./types.ts";
 
 export interface FFmpegStreamOptions {
-  path?: string;
+  exePath?: string;
   args: string[];
   chunkSize?: number;
   stderr?: boolean;
@@ -25,10 +25,13 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
   get proc() {
     if (!this.#proc) {
       this.#proc = Deno.run({
-        cmd: [(this.options.path || "ffmpeg"), ...this.options.args],
+        cmd: [(this.options.exePath || "ffmpeg"), ...this.options.args],
         stdout: "piped",
         stderr: this.options.stderr ? "piped" : "null",
         stdin: "piped",
+      });
+      this.proc.status().then((status) => {
+        console.log(`processEnded: ${status.code}`);
       });
     }
 
@@ -105,6 +108,10 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
         }
       },
       cancel: () => {
+        console.log("readable stream cancel");
+        this.proc.stdin?.close();
+        this.proc.stderr?.close();
+        this.proc.stdout?.close();
         this.proc.close();
       },
     });

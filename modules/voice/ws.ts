@@ -2,6 +2,7 @@ import type { VoiceConnection } from "./connection.ts";
 import { ENCRYPTION_MODE, OpCode, VOICE_VERSION } from "./types.ts";
 
 export class VoiceWebSocket {
+  private _isConnected = false;
   ws?: WebSocket;
 
   ping = 0;
@@ -16,6 +17,10 @@ export class VoiceWebSocket {
   addr?: Deno.NetAddr;
 
   #ssrcMap: { [userID: string]: number } = {};
+
+  get isConnected(): boolean {
+    return this._isConnected;
+  }
 
   getUserFromSSRC(ssrc: number): string | undefined {
     for (const id in this.#ssrcMap) {
@@ -42,10 +47,13 @@ export class VoiceWebSocket {
     }
 
     this.ready = false;
+    this._isConnected = false;
+
     this.ws = new WebSocket(`wss://${this.conn.endpoint}/?v=${VOICE_VERSION}`);
 
     this.ws.onopen = () => {
       console.log(`[WSS] Open`);
+      this._isConnected = true;
       this.sendIdentify();
     };
 
@@ -199,6 +207,7 @@ export class VoiceWebSocket {
   }
 
   close(code = 1000, reason = "") {
+    if (this.ws?.CLOSING || this.ws?.CLOSED) return;
     this.ws?.close(code, reason);
   }
 }

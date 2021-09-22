@@ -1,18 +1,8 @@
-import {
-  Collection,
-  Encoder,
-  readableStreamFromIterable,
-  secretbox,
-} from "../../deps.ts";
-import { VoicePlayer } from "./player.ts";
-import {
-  CHANNELS,
-  EncryptionMode,
-  FRAME_DURATION,
-  FRAME_SIZE,
-  SAMPLE_RATE,
-  Speaking,
-} from "./types.ts";
+import { Collection, secretbox } from "../../deps.ts";
+import { waitUntil } from "../util/util.ts";
+import { OpusStream } from "./ffmpeg.ts";
+import { Audio, VoiceQueue } from "./queue.ts";
+import { EncryptionMode, FRAME_DURATION, Speaking } from "./types.ts";
 import { VoiceUDP } from "./udp.ts";
 import { VoiceWebSocket } from "./ws.ts";
 
@@ -27,7 +17,6 @@ export interface VoiceConnectionInfo {
 }
 
 export class VoiceConnection {
-  private static _encoder: Encoder;
   private static connections = new Collection<string, VoiceConnection>();
 
   token?: string;
@@ -38,36 +27,18 @@ export class VoiceConnection {
 
   ws: VoiceWebSocket;
   udp: VoiceUDP;
+  vq: VoiceQueue;
 
   #key = new Uint8Array(secretbox.key_length);
-  #closables: CallableFunction[] = [];
 
-  /**
-   * Encoder getter.
-   * If encoder has not yet been initialized, it will be initialized
-   * and stored in a static variable for future reuse.
-   * @returns encoder
-   */
-  static get encoder(): Encoder {
-    if (this._encoder) return this._encoder;
-
-    const encoder = new Encoder({
-      channels: CHANNELS,
-      application: "audio",
-      max_opus_size: undefined,
-      sample_rate: SAMPLE_RATE,
-    });
-
-    encoder.bitrate = 96000;
-    encoder.complexity = 10;
-    encoder.packet_loss = 2;
-    encoder.signal = "music";
-    encoder.inband_fec = true;
-
-    this._encoder = encoder;
-
-    return this._encoder;
-  }
+  #startTime = Date.now();
+  #playTime = 0;
+  #pauseTime = 0;
+  #nextFrame?: number;
+  private playing = false;
+  private paused = false;
+  private audioReader?: ReadableStreamDefaultReader<Uint8Array>;
+  private audioStream?: OpusStream;
 
   /**
    * Check if the client is connected to the voice channel.
@@ -83,18 +54,12 @@ export class VoiceConnection {
    * @param userID id of the client
    * @returns voice connection already initialized
    */
-  static get(guildID: string): VoiceConnection | undefined {
-    return this.connections.get(guildID);
-  }
-
-  /**
-   * Player getter.
-   * If player has not yet been initialized, it will be initialized
-   * and stored in a variable for future reuse.
-   * @returns voice player
-   */
-  get player(): VoicePlayer {
-    return new VoicePlayer(this);
+  static get(guildID: string): VoiceConnection {
+    const conn = VoiceConnection.connections.get(guildID);
+    if (!conn) {
+      throw new Error("VoiceConnection not found");
+    }
+    return conn;
   }
 
   get key(): Uint8Array {
@@ -105,14 +70,12 @@ export class VoiceConnection {
     this.#key.set(val);
   }
 
-  #startTime = Date.now();
-  #playTime = 0;
-  #pausedTime = 0;
-  #nextFrame?: number;
-  paused = false;
-
   get ready() {
     return this.ws.ready;
+  }
+
+  get currentAudio() {
+    return this.vq.current;
   }
 
   constructor(
@@ -122,78 +85,154 @@ export class VoiceConnection {
     public sessionID: string,
     config: VoiceConnectionConfig = {},
   ) {
+    const { mode = "xsalsa20_poly1305", receive } = config;
     this.ws = new VoiceWebSocket(this);
     this.udp = new VoiceUDP(this);
-    this.mode = config.mode;
-    this.receive = config.receive;
+    this.vq = new VoiceQueue();
+    this.mode = mode;
+    this.receive = receive;
   }
 
+  /**
+   * Enstablish a connection with the voice channel.
+   * @param param0 token and endpoint sent by Discord
+   */
   connect({ token, endpoint }: VoiceConnectionInfo) {
     VoiceConnection.connections.set(this.guildID, this);
     this.token = token;
     this.endpoint = endpoint;
     this.ws.connect();
+    return waitUntil(() => this.ready);
   }
 
-  setSpeaking(...flags: (keyof typeof Speaking)[]) {
-    return this.ws.sendSpeaking(
-      flags.map((e) => Speaking[e]).reduce((a, b) => a | b, 0),
-    );
+  /**
+   * Set the speaking state of the client.
+   * @param flags bitmask of speaking states:
+   * - "MICROPHONE" => normal speaking
+   * - "SOUNDSHARE"
+   * - "PRIORITY" => priority over other users
+   * @returns whether the operation was sucessful
+   */
+  private setSpeaking(...flags: Speaking[]): boolean {
+    return this.ws.sendSpeaking(flags.reduce((a, b) => a | b, 0));
   }
 
-  async playPCM(pcm: Iterable<Uint8Array> | AsyncIterable<Uint8Array>) {
-    if (this.#nextFrame) {
-      clearTimeout(this.#nextFrame);
-      this.#nextFrame = undefined;
-    }
+  private async play(file: string) {
+    await this.resetPlayer();
+    this.playing = true;
+    this.audioStream = new OpusStream(file);
+    this.audioReader = new OpusStream(file).getReader();
 
-    const iter = VoiceConnection.encoder.encode_pcm_stream(FRAME_SIZE, pcm);
-    const stream = readableStreamFromIterable(
-      iter as AsyncIterable<Uint8Array>,
-    );
-    const reader = stream.getReader();
+    this.setSpeaking(Speaking.MICROPHONE);
+    this.audioFrame().catch((e) => {
+      console.error(e);
+      this.playing = false;
+      this.closeStreams();
+    });
+  }
 
-    this.#startTime = Date.now();
-    this.#playTime = 0;
-    this.#pausedTime = 0;
-
-    const frame = async () => {
-      if (this.paused) {
-        this.#pausedTime += FRAME_DURATION;
+  private audioFrame = async () => {
+    if (!this.playing || this.audioReader === undefined) return;
+    if (this.paused) {
+      this.#pauseTime += FRAME_DURATION;
+    } else {
+      const res = await this.audioReader.read();
+      if (res.done) {
+        this.skip();
+        return;
       } else {
-        const res = await reader.read();
-
-        if (res.done) {
-          this.ws?.sendSpeaking(0);
-          return;
-        } else {
-          const opus = res.value;
+        const opus = res.value;
+        try {
           await this.udp!.sendVoice(opus);
+        } catch (e) {
+          console.error(e);
         }
-
-        this.#playTime += FRAME_DURATION;
       }
+      this.#playTime += FRAME_DURATION;
+    }
 
-      this.#nextFrame = setTimeout(
-        frame,
-        this.#startTime + this.#playTime + this.#pausedTime - Date.now(),
-      );
-    };
+    this.#nextFrame = setTimeout(
+      this.audioFrame,
+      this.#startTime + this.#pauseTime + this.#playTime - Date.now(),
+    );
+  };
 
-    this.ws?.sendSpeaking(Speaking.MICROPHONE);
-    await frame();
+  /**
+   * Add an audio to the queue.
+   * @param path path or url of the audio to play
+   * @returns whether the audio added was played immedialy or just added to the queue
+   */
+  public addToQueue(path: Audio): boolean {
+    this.vq.addAudio(path);
+    if (this.vq.onlyOne()) {
+      this.play(this.vq.current.path);
+      return true;
+    }
+    return false;
   }
 
-  readable(userID: string) {
-    return this.udp.readable(userID);
+  public pause() {
+    this.paused = true;
+    this.setSpeaking();
   }
 
-  close() {
+  public resume() {
+    this.paused = false;
+    this.setSpeaking(Speaking.MICROPHONE);
+  }
+
+  public clear() {
+    this.vq.clear();
+  }
+
+  public async skip() {
+    this.playing = false;
+    this.paused = false;
+    this.vq.pop();
+    await this.closeStreams();
+    if (this.vq.isEmpty()) {
+      this.setSpeaking();
+    } else {
+      this.play(this.vq.current.path);
+      return this.vq.current;
+    }
+  }
+
+  /**
+   * Reset the audio player parameters.
+   */
+  private async resetPlayer() {
+    this.#playTime = 0;
+    this.#pauseTime = 0;
+    this.#startTime = Date.now();
+    await this.closeStreams();
     if (this.#nextFrame) {
       clearTimeout(this.#nextFrame);
       this.#nextFrame = undefined;
     }
-    // this.ws?.close();
+  }
+
+  private async closeStreams() {
+    if (this.audioReader) {
+      await this.audioReader.cancel();
+    }
+    this.audioReader = undefined;
+    if (this.audioStream) {
+      await this.audioStream.cancel();
+    }
+    this.audioStream = undefined;
+  }
+
+  /**
+   * Disconnect the client from the voice channel.
+   * To finalise the disconnect, the client must also leave the voice channel.
+   */
+  disconnect() {
+    if (this.#nextFrame) {
+      clearTimeout(this.#nextFrame);
+      this.#nextFrame = undefined;
+    }
+    this.ws?.close();
     this.udp?.close();
     VoiceConnection.connections.delete(this.guildID);
   }
