@@ -133,8 +133,9 @@ class AudioSlashModule extends SlashModule {
     const conn = VoiceConnection.get(i.guild!.id);
     const nextSong = await conn.skip();
 
-    let reply = `:fast_forward: Andiamo alla prossima!\n`;
-    if (nextSong) reply += `:notes: In riproduzione: \`${nextSong}\``;
+    const reply = nextSong
+      ? `:fast_forward: Andiamo alla prossima!\n:notes: **In riproduzione:** \`${nextSong.title}\``
+      : `:stop_button: Riproduzione terminata`;
     i.reply(reply);
   }
   /**
