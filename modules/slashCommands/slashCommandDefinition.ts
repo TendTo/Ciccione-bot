@@ -52,6 +52,7 @@ const commands: SlashCommandPartial[] = [
   { name: "skip", description: "Salta questa canzone e vai alla prossima" },
   { name: "pause", description: "Mette in pausa la canzone corrente" },
   { name: "resume", description: "Riprende la canzone corrente" },
+  { name: "clear", description: "Elimina tutte le altre canzoni in coda" },
   {
     name: "play",
     description: "Avvia una canzone",

@@ -140,7 +140,7 @@ class AudioSlashModule extends SlashModule {
   }
   /**
    * /pause command.
-   * Payse the audio player.
+   * Pause the audio player.
    * @param i - The interaction object.
    */
   @slash()
@@ -152,8 +152,8 @@ class AudioSlashModule extends SlashModule {
     i.reply(":pause_button: Pausa!");
   }
   /**
-   * /pause command.
-   * Payse the audio player.
+   * /resume command.
+   * Resume the audio player.
    * @param i - The interaction object.
    */
   @slash()
@@ -163,6 +163,19 @@ class AudioSlashModule extends SlashModule {
     const conn = VoiceConnection.get(i.guild!.id);
     conn.resume();
     i.reply(":arrow_forward: Riprendo!");
+  }
+  /**
+   * /clear command.
+   * Clear the audio queue.
+   * @param i - The interaction object.
+   */
+  @slash()
+  @isInGuild("Sei sicuro di essere in un server?")
+  @isBotInVoiceChannel("Non sono in nessun canale")
+  clear(i: ApplicationCommandInteraction) {
+    const conn = VoiceConnection.get(i.guild!.id);
+    conn.clear();
+    i.reply(":recycle: La code è stata ripulita");
   }
   /**
    * /leave command.
