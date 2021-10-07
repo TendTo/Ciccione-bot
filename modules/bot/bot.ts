@@ -7,25 +7,31 @@ import AudioSlashModule from "../slashCommands/audioCommands.ts";
  * Ciccione bot
  */
 export default class CiccioneBot extends CommandClient {
+  guildIds: string[];
+
   constructor(options: CommandClientOptions) {
     super(options);
     this.interactions.commands.slash.loadModule(new GeneralSlashModule());
     this.interactions.commands.slash.loadModule(new AudioSlashModule());
+    this.guildIds = Deno.env.get("GUILD_IDS")?.split(",") ||
+      ["686241829624086681"];
   }
 
   /**
    * Creates the commands globally or only for the provided guild
    * @param guildID server where to create the commands in
    */
-  createCommands(guildID?: string) {
-    commands.forEach(async (command) => {
-      try {
-        await this.interactions.commands.create(command, guildID);
-        console.log(`Created CMD ${command.name}!`);
-      } catch (e) {
-        console.error(`Error creating CMD ${command.name}!\n${e}`);
-      }
-    });
+  async createCommands(guildID?: string) {
+    return await Promise.all(
+      commands.map(async (command) => {
+        try {
+          await this.interactions.commands.create(command, guildID);
+          console.log(`Created CMD ${command.name}!`);
+        } catch (e) {
+          console.error(`Error creating CMD ${command.name}!\n${e}`);
+        }
+      }),
+    );
   }
 
   /**
@@ -54,9 +60,11 @@ export default class CiccioneBot extends CommandClient {
    *  Initialize the command slash suggestions.
    */
   @event()
-  ready() {
+  async ready() {
     console.log("CiccioneBot is ready!");
-    // this.deleteCommands("768026368428212234");
-    this.createCommands("446793262569619456");
+    for (const id of this.guildIds) {
+      // await this.deleteCommands(id);
+      await this.createCommands(id);
+    }
   }
 }
