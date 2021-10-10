@@ -38,7 +38,6 @@ export class VoiceConnection {
   private playing = false;
   private paused = false;
   private audioReader?: ReadableStreamDefaultReader<Uint8Array>;
-  private audioStream?: OpusStream;
 
   /**
    * Check if the client is connected to the voice channel.
@@ -120,9 +119,8 @@ export class VoiceConnection {
   private async play(file: string) {
     await this.resetPlayer();
     this.playing = true;
-    this.audioStream = new OpusStream(file);
     this.audioReader = new OpusStream(file).getReader();
-
+    console.log("Connection", this.udp);
     this.setSpeaking(Speaking.MICROPHONE);
     this.audioFrame().catch((e) => {
       console.error(e);
@@ -217,10 +215,6 @@ export class VoiceConnection {
       await this.audioReader.cancel();
     }
     this.audioReader = undefined;
-    if (this.audioStream) {
-      await this.audioStream.cancel();
-    }
-    this.audioStream = undefined;
   }
 
   /**

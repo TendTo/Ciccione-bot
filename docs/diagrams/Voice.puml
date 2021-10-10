@@ -1,0 +1,104 @@
+@startuml Voice on Discord
+title Voice on Discord
+!include <material/common>
+!include <material/robot.puml>
+!include <material/discord.puml>
+
+skinparam maxMessageSize 100
+skinparam participant {
+  Bordercolor none
+  Backgroundcolor none
+  Shadowing false
+}
+
+participant "MA_ROBOT(Black, 1)\nBot" as bot
+participant "MA_DISCORD(Black, 1)\nGateway" as discordG
+participant "MA_DISCORD(Black, 1)\nVoice gateway" as voiceG
+participant "MA_DISCORD(Black, 1)\nVoice enpoint" as voiceE
+
+bot -> discordG ++: Gateway Voice State Update
+note left : "{\n\
+  "op": 4,\n\
+  "d": {\n\
+    "guild_id": "41771983423143937",\n\
+    "channel_id": "127121515262115840",\n\
+    "self_mute": false,\n\
+    "self_deaf": false\n\
+  }\n\
+}
+bot <- discordG : Voice State Update
+note right : {\n\
+  "token": "my_token",\n\
+  "guild_id": "41771983423143937",\n\
+  "endpoint": "smart.loyal.discord.gg"\n\
+}
+bot <- discordG --: Voice Server Update
+note right : {\n\
+  "t": "VOICE_SERVER_UPDATE",\n\
+  "s": 2,\n\
+  "op": 0,\n\
+  "d": {\n\
+    "token": "my_token",\n\
+    "guild_id": "41771983423143937",\n\
+    "endpoint": "smart.loyal.discord.gg"\n\
+  }\n\
+}
+bot -> voiceG ++: Identify
+note left : {\n\
+  "op": 0,\n\
+  "d": {\n\
+    "server_id": "41771983423143937",\n\
+    "user_id": "104694319306248192",\n\
+    "session_id": "my_session_id",\n\
+    "token": "my_token"\n\
+  }\n\
+}
+bot <- voiceG --: Ready
+note right : {\n\
+    "op": 2,\n\
+    "d": {\n\
+        "ssrc": 1,\n\
+        "ip": "127.0.0.1",\n\
+        "port": 1234,\n\
+        "modes": [\n\
+                  "xsalsa20_poly1305", \n\
+                  "xsalsa20_poly1305_suffix",\n\
+                  "xsalsa20_poly1305_lite"\n\
+                 ],\n\
+    }\n\
+}
+bot -> voiceE ++: Ip Discovery
+note left : [\n 0x1 (2),\n length (2),\n SSRC (4),\n Address (64),\n Port (2)\n]
+bot <- voiceE --: Ip Discovery Response
+note right : [\n 0x2 (2),\n length (2),\n SSRC (4),\n Address (64),\n Port (2)\n]
+
+bot -> voiceG ++: Protocol select 
+note left : {\n\
+    "op": 1,\n\
+    "d": {\n\
+        "protocol": "udp",\n\
+        "data": {\n\
+            "address": "127.0.0.1",\n\
+            "port": 1337,\n\
+            "mode": "xsalsa20_poly1305_lite"\n\
+        }\n\
+    }\n\
+}
+bot <- voiceG --: Session description
+note right : {\n\
+    "op": 4,\n\
+    "d": {\n\
+        "mode": "xsalsa20_poly1305_lite",\n\
+        "secret_key": [ ...251, 100, 11...]\n\
+    }\n\
+}
+
+bot -> voiceE : Send voice
+note left : [\n\
+  0x8078 (2),\n\
+  Sequence (2),\n\
+  Timestamp (4),\n\
+  SSRC (4),\n\
+  Encrypted audio (n)\n\
+]
+@enduml

@@ -93,6 +93,7 @@ export class VoiceWebSocket {
 
       switch (op) {
         case OpCode.HELLO:
+          console.log(`[WSS] Hello: `, d);
           this.#heartbeatInterval = d.heartbeat_interval as number;
           this.sendHeartbeat();
           this.#heartbeatTimer = setInterval(() => {
@@ -111,6 +112,7 @@ export class VoiceWebSocket {
           break;
 
         case OpCode.READY:
+          console.log(`[WSS] Ready: `, d);
           if (!d.modes.includes(ENCRYPTION_MODE)) {
             throw new Error("Encryption Mode not found");
           }
@@ -133,13 +135,13 @@ export class VoiceWebSocket {
           break;
 
         case OpCode.SESSION_DESCRIPTION:
+          console.log(`[WSS] Session description: `, d);
           this.conn.key = d.secret_key;
           this.conn.mode = d.mode;
           this.ready = true;
           break;
 
         case OpCode.SPEAKING:
-          console.log(`[WSS] ${d.speaking}`);
           this.#ssrcMap[d.user_id] = d.ssrc;
           break;
 

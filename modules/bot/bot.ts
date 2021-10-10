@@ -14,7 +14,7 @@ export default class CiccioneBot extends CommandClient {
     this.interactions.commands.slash.loadModule(new GeneralSlashModule());
     this.interactions.commands.slash.loadModule(new AudioSlashModule());
     this.guildIds = Deno.env.get("GUILD_IDS")?.split(",") ||
-      ["686241829624086681"];
+      ["686241829624086681", "768026368428212234"];
   }
 
   /**

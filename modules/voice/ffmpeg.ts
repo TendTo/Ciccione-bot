@@ -20,7 +20,6 @@ export interface FFmpegStreamOptions {
 export class FFmpegStream extends ReadableStream<Uint8Array> {
   #proc?: Deno.Process;
   #stderr?: ReadableStream<string>;
-  #stdin?: WritableStream<Uint8Array>;
 
   get proc() {
     if (!this.#proc) {
@@ -28,7 +27,6 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
         cmd: [(this.options.exePath || "ffmpeg"), ...this.options.args],
         stdout: "piped",
         stderr: this.options.stderr ? "piped" : "null",
-        stdin: "piped",
       });
       this.proc.status().then((status) => {
         console.log(`processEnded: ${status.code}`);
@@ -40,7 +38,6 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
         new TextDecoderStream(),
       );
     }
-    this.#stdin = writableStreamFromWriter(this.#proc.stdin!);
     return this.#proc;
   }
 
@@ -54,14 +51,6 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
     }
 
     return this.#stderr;
-  }
-
-  get stdin() {
-    if (!this.#stdin) {
-      this.#stdin = writableStreamFromWriter(this.proc.stdin!);
-    }
-
-    return this.#stdin;
   }
 
   /**
@@ -109,7 +98,6 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
       },
       cancel: () => {
         console.log("readable stream cancel");
-        this.proc.stdin?.close();
         this.proc.stderr?.close();
         this.proc.stdout?.close();
         this.proc.close();
