@@ -20,23 +20,32 @@ export class CodeManager {
   }
 }
 
+/**
+ * Wait until the condition is true. Check every interval ms.
+ * @param condition condition to wait for
+ * @param timeout timeout in ms
+ * @param interval interval in ms
+ */
 export function waitUntil(
   condition: () => boolean,
   timeout = 5000,
   interval = 100,
 ): Promise<void> {
-  let timeEnlapsed = 0;
   return new Promise((resolve, reject) => {
-    const check = setInterval(() => {
-      if (!condition()) {
-        timeEnlapsed += interval;
-        return;
-      }
-      if (timeEnlapsed > timeout) {
+    let timeEnlapsed = 0;
+    let timer: number | undefined;
+    const check = () => {
+      if (condition()) {
+        clearTimeout(timer);
+        resolve();
+      } else if (timeEnlapsed >= timeout) {
+        clearTimeout(timer);
         reject(new Error("Timeout"));
+      } else {
+        timeEnlapsed += interval;
+        timer = setTimeout(check, interval);
       }
-      clearInterval(check);
-      resolve();
-    }, interval);
+    };
+    check();
   });
 }
