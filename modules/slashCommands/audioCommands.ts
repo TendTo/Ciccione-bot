@@ -225,17 +225,18 @@ class AudioSlashModule extends SlashModule {
     }
 
     const info = await getInfo(searchResult.id);
-    const songPath = info.formats.find((e) => e.hasAudio && !e.hasVideo)!.url;
+    const fomat = info.formats.find((e) => e.hasAudio && !e.hasVideo);
+    if (!fomat) {
+      i.reply("Non ho trovato nulla o il video potrebbe essere restricted");
+      return;
+    }
+
     const audio = {
-      path: songPath,
+      path: fomat.url,
       duration: searchResult.duration,
       title: searchResult.title ?? "Sconosciuto",
       link: `https://www.youtube.com/watch?v=${searchResult.id}`,
     };
-    if (!songPath) {
-      i.reply("Non ho trovato nulla");
-      return;
-    }
 
     const conn = VoiceConnection.get(i.guild!.id);
     const isPlayng = conn.addToQueue(audio);
