@@ -45,6 +45,16 @@ const commands: SlashCommandPartial[] = [
       type: SlashCommandOptionType.STRING,
     }],
   },
+  {
+    name: "gartic_phone_sondaggio",
+    description: "Determina la modalità preferita da usare su Gartic Phone tramite un sondaggio",
+    options: [{
+      name: "canale",
+      description: "Nome del canale",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }],
+  },
   { name: "clean", description: "Toglie il vostro schifo" },
   { name: "mistakes", description: "You made mistakes" },
   { name: "join", description: "Unisciti ad un canale vocale" },

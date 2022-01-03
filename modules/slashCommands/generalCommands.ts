@@ -4,7 +4,7 @@ import {
   slash,
   SlashModule,
 } from "../../deps.ts";
-import { rulesJester } from "../constants/constants.ts";
+import { garticPhone, rulesJester } from "../constants/constants.ts";
 import { CodeManager } from "../util/util.ts";
 
 /**
@@ -116,13 +116,11 @@ class GeneralSlashModule extends SlashModule {
 
     i.reply("Messaggi cancellati!", { ephemeral: true });
   }
-
   /**
    * /code command.
    * Store the code provided, and then show it with tts.
    * @param i - The interaction object.
    */
-  // @isInGuild()
   @slash()
   code(i: ApplicationCommandInteraction) {
     const code = i.option<string>("codice");
@@ -133,6 +131,65 @@ class GeneralSlashModule extends SlashModule {
     } else {
       i.reply(CodeManager.getCode(i.guild!.id), { tts: true });
     }
+  }
+  /**
+   * /gartic_phone_sondaggio command.
+   * Creates a poll to decide which mode of Gartic Phone to play.
+   * @param i - The interaction object.
+   */
+  @slash()
+  async gartic_phone_sondaggio(i: ApplicationCommandInteraction) {
+    await i.defer();
+    const channelId = i.option<string>("canale") || "884919191742865459";
+    const garticChannel = await i.guild?.channels.get(channelId);
+
+    if (!garticChannel || !garticChannel.isGuildText()) {
+      i.reply("Non posso creare il sondaggio");
+      return;
+    }
+
+    const poll = await garticChannel.send(garticPhone);
+    if (!poll) {
+      i.reply("Non posso creare il sondaggio");
+      return;
+    }
+
+    const originalFetch = fetch;
+    globalThis.fetch = (
+      input: string | Request | URL,
+      options?: RequestInit,
+    ) => {
+      if (options && options.headers) {
+        const newHeaders = new Headers(options.headers);
+        newHeaders.delete("Content-Length");
+        options.headers = newHeaders;
+      }
+      return originalFetch(input, options);
+    };
+
+    const reactions = [
+      "1️⃣",
+      "2️⃣",
+      "3️⃣",
+      "4️⃣",
+      "5️⃣",
+      "6️⃣",
+      "7️⃣",
+      "8️⃣",
+      "9️⃣",
+    ];
+    await Promise.all(
+      reactions.map(async (reaction) => {
+        try {
+          await poll.addReaction(reaction);
+        } catch (e) {
+          console.error(e);
+        }
+      }),
+    );
+    globalThis.fetch = originalFetch;
+
+    i.reply("Tutto fatto :white_check_mark:!", { ephemeral: true });
   }
 }
 
