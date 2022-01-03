@@ -1,18 +1,15 @@
 import {
   ApplicationCommandInteraction,
   getInfo,
+  isBotInVoiceChannel,
+  isInGuild,
+  isUserInVoiceChannel,
   slash,
   SlashModule,
   VoiceState,
   YouTube,
 } from "../../deps.ts";
 import { VoiceConnection } from "../voice/connection.ts";
-import {
-  isBotInVoiceChannel,
-  isInGuild,
-  isSubCommand,
-  isUserInVoiceChannel,
-} from "./slashModifiers.ts";
 
 type cdsSound = "seee" | "ame" | "cht" | "demo" | "ess" | "spranga" | "war";
 
@@ -31,12 +28,15 @@ type cdsSound = "seee" | "ame" | "cht" | "demo" | "ess" | "spranga" | "war";
  */
 class AudioSlashModule extends SlashModule {
   /**
-   * Generate the complete url to the video.
-   * @param id id of the youtube video
-   * @returns complete url of the video
+   * Id of the youtube video to fetch the id from with regex
+   * @param url url to fetch the id from
+   * @returns id of the video or false if it was not found
    */
-  private getYoutubeLink(id: string) {
-    return `https://www.youtube.com/watch?v=${id}`;
+  getIdFromUrl(url: string): string | false {
+    const match = url.match(
+      /^.*?((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/,
+    );
+    return (match && match[7].length == 11) ? match[7] : false;
   }
   /**
    * Make sure all the preconditions are met before joining a voice channel.
@@ -68,6 +68,7 @@ class AudioSlashModule extends SlashModule {
       joinData.guild.id,
       vs.channel.id,
       joinData.sessionID,
+      i.guild!,
       {
         mode: "xsalsa20_poly1305",
       },
@@ -215,12 +216,14 @@ class AudioSlashModule extends SlashModule {
       }
     }
 
-    const searchResult = await YouTube.searchOne(search);
+    const searchResult = this.getIdFromUrl(search)
+      ? await YouTube.getVideo(search)
+      : await YouTube.searchOne(search);
     if (!searchResult || !searchResult.id) {
       i.reply("Non ho trovato nulla");
       return;
     }
-    const conn = VoiceConnection.get(i.guild!.id);
+
     const info = await getInfo(searchResult.id);
     const songPath = info.formats.find((e) => e.hasAudio && !e.hasVideo)!.url;
     const audio = {
@@ -229,6 +232,12 @@ class AudioSlashModule extends SlashModule {
       title: searchResult.title ?? "Sconosciuto",
       link: `https://www.youtube.com/watch?v=${searchResult.id}`,
     };
+    if (!songPath) {
+      i.reply("Non ho trovato nulla");
+      return;
+    }
+
+    const conn = VoiceConnection.get(i.guild!.id);
     const isPlayng = conn.addToQueue(audio);
     i.reply(
       `:mag_right: **Ricerca:** \`${search}\`\n` +
@@ -237,7 +246,6 @@ class AudioSlashModule extends SlashModule {
         }:** \`${audio.title}\` ${audio.link} - ${searchResult.durationFormatted}`,
     );
   }
-
   /**
    * /cds command group.
    * Listen to the best CDS has to offer.
@@ -245,7 +253,6 @@ class AudioSlashModule extends SlashModule {
    */
   @slash()
   @isInGuild("Sei sicuro di essere in un server?")
-  @isSubCommand("audio", "Devi aggiungere il sottocomando audio")
   async cds(i: ApplicationCommandInteraction) {
     const track = i.option<number>("traccia");
 

@@ -116,8 +116,6 @@ export class VoiceUDP {
     view.setUint16(0, 0x1, false);
     view.setUint16(2, 70, false);
     view.setUint32(4, this.conn.ws?.ssrc!, false);
-    console.log("IP-discovery: buf", buf);
-    console.log("ssrc", this.conn.ws?.ssrc);
     await this.socket!.send(buf, this.conn.ws?.addr!);
 
     const [recv] = await this.socket!.receive();

@@ -1,8 +1,4 @@
-import {
-  readableStreamFromReader,
-  writableStreamFromWriter,
-} from "https://deno.land/std@0.98.0/io/streams.ts";
-import { Encoder } from "../../deps.ts";
+import { Encoder, readableStreamFromReader } from "../../deps.ts";
 import {
   CHANNELS,
   DEFAULT_CHUNK_SIZE,

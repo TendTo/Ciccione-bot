@@ -1,4 +1,4 @@
-import { Collection, secretbox } from "../../deps.ts";
+import { Collection, Guild, secretbox } from "../../deps.ts";
 import { waitUntil } from "../util/util.ts";
 import { OpusStream } from "./ffmpeg.ts";
 import { Audio, VoiceQueue } from "./queue.ts";
@@ -82,6 +82,7 @@ export class VoiceConnection {
     public guildID: string,
     public channelID: string,
     public sessionID: string,
+    public guild: Guild,
     config: VoiceConnectionConfig = {},
   ) {
     const { mode = "xsalsa20_poly1305", receive } = config;
@@ -120,7 +121,6 @@ export class VoiceConnection {
     await this.resetPlayer();
     this.playing = true;
     this.audioReader = new OpusStream(file).getReader();
-    console.log("Connection", this.udp);
     this.setSpeaking(Speaking.MICROPHONE);
     this.audioFrame().catch((e) => {
       console.error(e);
@@ -190,6 +190,12 @@ export class VoiceConnection {
     await this.closeStreams();
     if (this.vq.isEmpty()) {
       this.setSpeaking();
+      console.log("Leaving channel");
+      const vs = await this.guild.voiceStates.get(this.userID);
+      if (vs) {
+        await vs.channel?.leave();
+      }
+      VoiceConnection.connections.delete(this.guildID);
     } else {
       this.play(this.vq.current.path);
       return this.vq.current;
