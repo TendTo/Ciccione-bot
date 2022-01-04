@@ -47,10 +47,71 @@ const commands: SlashCommandPartial[] = [
   },
   {
     name: "gartic_phone_sondaggio",
-    description: "Determina la modalità preferita da usare su Gartic Phone tramite un sondaggio",
+    description:
+      "Determina la modalità preferita da usare su Gartic Phone tramite un sondaggio",
     options: [{
       name: "canale",
       description: "Nome del canale",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }],
+  },
+  {
+    name: "sondaggio",
+    description: "Crea un sondaggio",
+    options: [{
+      name: "titolo",
+      description: "Nome del sondaggio",
+      required: true,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op1",
+      description: "Opzione 1",
+      required: true,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op2",
+      description: "Opzione 2",
+      required: true,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op3",
+      description: "Opzione 3",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op4",
+      description: "Opzione 4",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op5",
+      description: "Opzione 5",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op6",
+      description: "Opzione 6",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op7",
+      description: "Opzione 7",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op8",
+      description: "Opzione 8",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "op9",
+      description: "Opzione 9",
+      required: false,
+      type: SlashCommandOptionType.STRING,
+    }, {
+      name: "canale",
+      description: "Id del canale",
       required: false,
       type: SlashCommandOptionType.STRING,
     }],

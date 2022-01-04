@@ -5,7 +5,7 @@ import {
   SlashModule,
 } from "../../deps.ts";
 import { garticPhone, rulesJester } from "../constants/constants.ts";
-import { CodeManager } from "../util/util.ts";
+import { buildPoll, CodeManager } from "../util/util.ts";
 
 /**
  * Module containing all the generic Ciccione bot's slash command handlers.
@@ -17,6 +17,17 @@ import { CodeManager } from "../util/util.ts";
  * - /ciccione
  */
 class GeneralSlashModule extends SlashModule {
+  private readonly reactions = [
+    "1️⃣",
+    "2️⃣",
+    "3️⃣",
+    "4️⃣",
+    "5️⃣",
+    "6️⃣",
+    "7️⃣",
+    "8️⃣",
+    "9️⃣",
+  ];
   /**
    * /tendinfame command.
    * Say "Tend Infame".
@@ -167,21 +178,68 @@ class GeneralSlashModule extends SlashModule {
       return originalFetch(input, options);
     };
 
-    const reactions = [
-      "1️⃣",
-      "2️⃣",
-      "3️⃣",
-      "4️⃣",
-      "5️⃣",
-      "6️⃣",
-      "7️⃣",
-      "8️⃣",
-      "9️⃣",
-    ];
     await Promise.all(
-      reactions.map(async (reaction) => {
+      this.reactions.map(async (reaction) => {
         try {
           await poll.addReaction(reaction);
+        } catch (e) {
+          console.error(e);
+        }
+      }),
+    );
+    globalThis.fetch = originalFetch;
+
+    i.reply("Tutto fatto :white_check_mark:!", { ephemeral: true });
+  }
+  /**
+   * /sondaggio command.
+   * Creates new poll.
+   * @param i - The interaction object.
+   */
+  @slash()
+  async sondaggio(i: ApplicationCommandInteraction) {
+    await i.defer();
+
+    const options = [];
+    for (let idx = 1; idx < 10; idx++) {
+      const option = i.option<string>("op" + idx);
+      if (option) {
+        options.push(option);
+      }
+    }
+    const channelId = i.option<string>("canale") || "446793262569619458";
+    const channel = await i.guild?.channels.get(channelId);
+
+    if (!channel || !channel.isGuildText()) {
+      i.reply("Non ho trovato il canale");
+      return;
+    }
+
+    const poll = await channel.send(
+      buildPoll(i.option<string>("titolo"), options),
+    );
+    if (!poll) {
+      i.reply("Non posso creare il sondaggio");
+      return;
+    }
+
+    const originalFetch = fetch;
+    globalThis.fetch = (
+      input: string | Request | URL,
+      options?: RequestInit,
+    ) => {
+      if (options && options.headers) {
+        const newHeaders = new Headers(options.headers);
+        newHeaders.delete("Content-Length");
+        options.headers = newHeaders;
+      }
+      return originalFetch(input, options);
+    };
+
+    await Promise.all(
+      options.map(async (_, i) => {
+        try {
+          await poll.addReaction(this.reactions[i]);
         } catch (e) {
           console.error(e);
         }

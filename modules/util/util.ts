@@ -49,3 +49,10 @@ export function waitUntil(
     check();
   });
 }
+
+export function buildPoll(title: string, options: string[]) {
+  return `${title}
+\`\`\`yaml
+${options.map((v, i) => `${i + 1}: ${v}`).join("\n")}
+\`\`\``;
+}
