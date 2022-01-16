@@ -1,4 +1,4 @@
-export * from "https://deno.land/x/harmony@v2.4.0/mod.ts";
+export * from "https://deno.land/x/harmony@v2.5.0/mod.ts";
 export { Encoder } from "https://unpkg.com/@evan/wasm@0.0.63/target/opus/deno.js";
 export { secretbox } from "https://unpkg.com/@evan/wasm@0.0.63/target/nacl/deno.js";
 export { readableStreamFromIterable } from "https://deno.land/std@0.98.0/io/streams.ts";

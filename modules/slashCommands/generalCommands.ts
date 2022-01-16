@@ -165,19 +165,6 @@ class GeneralSlashModule extends SlashModule {
       return;
     }
 
-    const originalFetch = fetch;
-    globalThis.fetch = (
-      input: string | Request | URL,
-      options?: RequestInit,
-    ) => {
-      if (options && options.headers) {
-        const newHeaders = new Headers(options.headers);
-        newHeaders.delete("Content-Length");
-        options.headers = newHeaders;
-      }
-      return originalFetch(input, options);
-    };
-
     await Promise.all(
       this.reactions.map(async (reaction) => {
         try {
@@ -187,7 +174,6 @@ class GeneralSlashModule extends SlashModule {
         }
       }),
     );
-    globalThis.fetch = originalFetch;
 
     i.reply("Tutto fatto :white_check_mark:!", { ephemeral: true });
   }
@@ -223,19 +209,6 @@ class GeneralSlashModule extends SlashModule {
       return;
     }
 
-    const originalFetch = fetch;
-    globalThis.fetch = (
-      input: string | Request | URL,
-      options?: RequestInit,
-    ) => {
-      if (options && options.headers) {
-        const newHeaders = new Headers(options.headers);
-        newHeaders.delete("Content-Length");
-        options.headers = newHeaders;
-      }
-      return originalFetch(input, options);
-    };
-
     await Promise.all(
       options.map(async (_, i) => {
         try {
@@ -245,7 +218,6 @@ class GeneralSlashModule extends SlashModule {
         }
       }),
     );
-    globalThis.fetch = originalFetch;
 
     i.reply("Tutto fatto :white_check_mark:!", { ephemeral: true });
   }
