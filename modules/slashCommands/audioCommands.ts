@@ -242,7 +242,7 @@ class AudioSlashModule extends SlashModule {
     const isPlayng = conn.addToQueue(audio);
     i.reply(
       `:mag_right: **Ricerca:** \`${search}\`\n` +
-        `":notes: **${
+        `:notes: **${
           isPlayng ? "In riproduzione" : "Aggiunto alla coda"
         }:** \`${audio.title}\` ${audio.link} - ${searchResult.durationFormatted}`,
     );
@@ -276,7 +276,7 @@ class AudioSlashModule extends SlashModule {
     const isPlayng = conn.addToQueue(audio);
     i.reply(
       `:microphone: **Comando:** \`${i.subCommand}\`\n` +
-        `":notes: **${
+        `:notes: **${
           isPlayng ? "In riproduzione" : "Aggiunto alla coda"
         }:** \`${audio.title}\``,
     );
