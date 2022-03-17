@@ -1,3 +1,4 @@
+#!/usr/bin/env -S deno run --allow-env --allow-net --allow-read --unstable --allow-run
 // Importing Client and Intents class from Harmony
 import { Intents } from "./deps.ts";
 import CiccioneBot from "./modules/bot/bot.ts";

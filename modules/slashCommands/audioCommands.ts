@@ -225,14 +225,14 @@ class AudioSlashModule extends SlashModule {
     }
 
     const info = await getInfo(searchResult.id);
-    const fomat = info.formats.find((e) => e.hasAudio && !e.hasVideo);
-    if (!fomat) {
+    const format = info.formats.find((e) => e.hasAudio && !e.hasVideo);
+    if (!format) {
       i.reply("Non ho trovato nulla o il video potrebbe essere restricted");
       return;
     }
 
     const audio = {
-      path: fomat.url,
+      path: format.url,
       duration: searchResult.duration,
       title: searchResult.title ?? "Sconosciuto",
       link: `https://www.youtube.com/watch?v=${searchResult.id}`,
