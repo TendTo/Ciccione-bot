@@ -37,7 +37,10 @@ export class VoiceConnection {
   #nextFrame?: number;
   private playing = false;
   private paused = false;
-  private audioReader?: ReadableStreamDefaultReader<Uint8Array>;
+  private audioReader?: ReadableStream<Uint8Array>;
+  private audioReaderCtx?: ReadableStreamDefaultController<Uint8Array>;
+  private audioWriter?: WritableStream<Uint8Array>;
+  private reader?: ReadableStreamReader<Uint8Array>;
 
   /**
    * Check if the client is connected to the voice channel.
@@ -119,8 +122,14 @@ export class VoiceConnection {
 
   private async play(file: string) {
     await this.resetPlayer();
+    this.initStreams();
     this.playing = true;
-    this.audioReader = new OpusStream(file).getReader();
+
+    if (!this.audioWriter) {
+      throw new Error("Audio writer is undefined");
+    }
+
+    new OpusStream(file).stdout?.pipeTo(this.audioWriter);
     this.setSpeaking(Speaking.MICROPHONE);
     this.audioFrame().catch((e) => {
       console.error(e);
@@ -130,11 +139,11 @@ export class VoiceConnection {
   }
 
   private audioFrame = async () => {
-    if (!this.playing || this.audioReader === undefined) return;
+    if (!this.playing || this.reader === undefined) return;
     if (this.paused) {
       this.#pauseTime += FRAME_DURATION;
     } else {
-      const res = await this.audioReader.read();
+      const res = await this.reader.read();
       if (res.done) {
         this.skip();
         return;
@@ -190,7 +199,6 @@ export class VoiceConnection {
     await this.closeStreams();
     if (this.vq.isEmpty()) {
       this.setSpeaking();
-      console.log("Leaving channel");
       const vs = await this.guild.voiceStates.get(this.userID);
       if (vs) {
         await vs.channel?.leave();
@@ -200,6 +208,23 @@ export class VoiceConnection {
       this.play(this.vq.current.path);
       return this.vq.current;
     }
+  }
+
+  private initStreams() {
+    this.audioReader = new ReadableStream({
+      start: (ctx) => {
+        this.audioReaderCtx = ctx;
+      },
+    });
+    this.audioWriter = new WritableStream({
+      write: (chunk) => {
+        this.audioReaderCtx?.enqueue(chunk);
+      },
+      close: () => {
+        this.audioReaderCtx?.close();
+      },
+    });
+    this.reader = this.audioReader.getReader();
   }
 
   /**
@@ -217,7 +242,7 @@ export class VoiceConnection {
   }
 
   private async closeStreams() {
-    if (this.audioReader) {
+    if (this.audioReader && !this.audioReader.locked) {
       await this.audioReader.cancel();
     }
     this.audioReader = undefined;

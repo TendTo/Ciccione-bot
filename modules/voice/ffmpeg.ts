@@ -13,26 +13,34 @@ export interface FFmpegStreamOptions {
   stderr?: boolean;
 }
 
-export class FFmpegStream extends ReadableStream<Uint8Array> {
+export class FFmpegStream {
   #proc?: Deno.Process;
+  #stdout?: ReadableStream<Uint8Array>;
   #stderr?: ReadableStream<string>;
+  #transformer?: TransformStream;
+
+  get transformer() {
+    if (!this.#transformer) {
+      const chunkEncoder = this.chunkEncoder.bind(this);
+      this.#transformer = new TransformStream({
+        transform(chunk, controller) {
+          controller.enqueue(chunkEncoder(chunk));
+        },
+        flush(controller) {
+          controller.terminate();
+        },
+      });
+    }
+    return this.#transformer;
+  }
 
   get proc() {
     if (!this.#proc) {
       this.#proc = Deno.run({
-        cmd: [(this.options.exePath || "ffmpeg"), ...this.options.args],
+        cmd: [this.options.exePath || "ffmpeg", ...this.options.args],
         stdout: "piped",
         stderr: this.options.stderr ? "piped" : "null",
       });
-      this.proc.status().then((status) => {
-        console.log(`processEnded: ${status.code}`);
-      });
-    }
-
-    if (this.#proc.stderr) {
-      this.#stderr = readableStreamFromReader(this.#proc.stderr).pipeThrough(
-        new TextDecoderStream(),
-      );
     }
     return this.#proc;
   }
@@ -49,6 +57,20 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
     return this.#stderr;
   }
 
+  get stdout() {
+    if (!this.#stdout && this.proc.stdout) {
+      this.#stdout = readableStreamFromReader(this.proc.stdout, {
+        chunkSize: DEFAULT_CHUNK_SIZE,
+      }).pipeThrough(
+        this.transformer,
+      );
+    }
+
+    return this.#stdout;
+  }
+
+  constructor(public options: FFmpegStreamOptions) {}
+
   /**
    * Encode the audio stream with the provided encoding.
    * This version just returns the chunk provided.
@@ -58,47 +80,6 @@ export class FFmpegStream extends ReadableStream<Uint8Array> {
    */
   chunkEncoder(chunk: Uint8Array): Uint8Array {
     return chunk;
-  }
-
-  constructor(public options: FFmpegStreamOptions) {
-    const { chunkSize = DEFAULT_CHUNK_SIZE } = options;
-    super({
-      pull: async (ctx: ReadableStreamDefaultController<Uint8Array>) => {
-        const chunk = new Uint8Array(chunkSize);
-        let currentRead = 0;
-        try {
-          // Keep reading until we have a full chunk
-          while (currentRead < DEFAULT_CHUNK_SIZE) {
-            const missingChunk = new Uint8Array(chunkSize - currentRead);
-            const read = await this.proc.stdout?.read(missingChunk);
-
-            // If the stream has ended, close both the stream and the process
-            if (read === undefined || read === null) {
-              ctx.close();
-              this.proc.close();
-              return;
-            }
-
-            chunk.set(missingChunk.subarray(0, read), currentRead);
-            currentRead += read;
-          }
-
-          // Enqueue the chunk after applying the encoding
-          const encoded = this.chunkEncoder(chunk);
-          ctx.enqueue(encoded);
-        } catch (e) {
-          console.error(e);
-          ctx.error(e);
-          this.proc.close();
-        }
-      },
-      cancel: () => {
-        console.log("readable stream cancel");
-        this.proc.stderr?.close();
-        this.proc.stdout?.close();
-        this.proc.close();
-      },
-    });
   }
 }
 
@@ -116,18 +97,14 @@ export class PCMStream extends FFmpegStream {
         "2",
         "-ar",
         "48000",
-        "-",
+        "pipe:1",
       ],
     });
   }
 }
 
 export class OpusStream extends PCMStream {
-  private static _encoder?: Encoder;
-
-  constructor(path: string) {
-    super(path);
-  }
+  #encoder?: Encoder;
 
   /**
    * Encoder getter.
@@ -135,8 +112,8 @@ export class OpusStream extends PCMStream {
    * and stored in a static variable for future reuse.
    * @returns encoder
    */
-  static get encoder(): Encoder {
-    if (this._encoder) return this._encoder;
+  get encoder(): Encoder {
+    if (this.#encoder) return this.#encoder;
 
     const encoder = new Encoder({
       channels: CHANNELS,
@@ -151,13 +128,17 @@ export class OpusStream extends PCMStream {
     encoder.signal = "music";
     encoder.inband_fec = true;
 
-    this._encoder = encoder;
+    this.#encoder = encoder;
 
-    return this._encoder;
+    return this.#encoder;
+  }
+
+  constructor(path: string) {
+    super(path);
   }
 
   override chunkEncoder(chunk: Uint8Array): Uint8Array {
-    return OpusStream.encoder.encode(FRAME_SIZE, new Int16Array(chunk.buffer));
+    return this.encoder.encode(FRAME_SIZE, new Int16Array(chunk.buffer));
   }
 }
 
